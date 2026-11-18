@@ -1,0 +1,8 @@
+numpy
+pandas
+scipy
+opencv-python
+open3d
+pycolmap
+pymavlink
+matplotlib

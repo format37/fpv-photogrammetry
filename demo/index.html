@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kojori canyon: volume between two dams</title>
+<style>
+  :root { --canvas:#0a0a0c; --rule:#1c1c20; --rule-soft:#131316; --text-primary:#f4f4f5; --text-secondary:#a1a1aa;
+          --text-muted:#71717a; --text-faint:#52525b; --panel:rgba(0,0,0,.3);
+          --font-mono: ui-monospace, 'JetBrains Mono', 'SF Mono', monospace; }
+  body { margin:0; background:var(--canvas); color:var(--text-primary); font-family:system-ui,sans-serif; }
+  main { max-width:980px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font:600 20px/1.3 var(--font-mono); margin:0 0 6px; }
+  p { color:var(--text-secondary); font-size:14px; line-height:1.5; margin:0 0 16px; }
+  a { color:#8f86ff; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Kojori canyon: volume between two dams</h1>
+  <p>A 2 m height grid reconstructed from FPV video and scaled with the flight controller's GPS log.
+     Move the dams and the water level; the volume is a flood fill over the same grid.
+     <a href="https://latentstate.dev/posts/canyon-volume-from-fpv-video/">How it was made</a></p>
+  <canyon-lab></canyon-lab>
+</main>
+<script type="module" src="./canyon-lab.js"></script>
+</body>
+</html>
