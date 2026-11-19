@@ -44,6 +44,12 @@ first. Rules that prevent the expensive mistakes:
   `esbuild demo/lab.ts --bundle --format=esm --minify --loader:.css=text --outfile=demo/canyon-lab.js`
   (needs `three` installed).
 
+## Example data
+
+`examples/kojori.sh` runs the tools on a public dataset (see README). After changing `georef.py` or
+`build_dsm.py`, run `examples/kojori.sh geo`: it needs no GPU and must reproduce the reference
+outputs exactly. After changing anything in the SfM path, run `examples/kojori.sh mini`.
+
 ## Privacy
 
 Flight logs contain precise home coordinates. Ask before publishing a log, a track, or a model.

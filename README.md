@@ -5,6 +5,8 @@ GPS log, and measure things on it. Built around [COLMAP](https://colmap.github.i
 
 - Write-up: [Measuring a Canyon from FPV Video](https://latentstate.dev/posts/canyon-volume-from-fpv-video/)
 - Source footage: <https://youtu.be/s8RxP2BK_d0>
+- Example data: [format37/kojori-canyon-fpv](https://huggingface.co/datasets/format37/kojori-canyon-fpv) on
+  Hugging Face — the keyframes, the GPS track and the reference outputs of the flight in the write-up.
 - Demo: `demo/` — flood the reconstructed Kojori canyon between two dams and read the volume.
 
 ```
@@ -21,6 +23,33 @@ cd demo && python3 -m http.server 8000      # open http://localhost:8000
 ```
 
 It needs WebGL. Data for the Kojori canyon (2.8 MB) is in `demo/data/`.
+
+## Try it on the example data
+
+The Kojori flight is a public dataset (320 MB, CC BY 4.0): 241 keyframes, the flight controller's GPS
+track, and the reference outputs of every stage. `examples/kojori.sh` runs the tools on it.
+
+```bash
+pip install -U huggingface_hub
+examples/kojori.sh fetch     # download into ./kojori
+examples/kojori.sh geo       # no GPU, under a minute: GPS fit + height grid from the reference outputs
+examples/kojori.sh mini      # GPU, about 3 min: sparse SfM on 59 frames (two passes), model check, GPS fit
+examples/kojori.sh full      # GPU, about 2.5 h: steps 2-7 below on all 241 frames
+```
+
+| run | what to expect |
+|---|---|
+| `geo` | `fit on 223 cameras: lag +1.15 s, scale 162.548 m/unit, rms 3.03 m`, then `height grid: identical to the reference` |
+| `mini` | 59 of 59 frames registered, focal length near 800 px, mean reprojection error about 0.7 px, `normal depth order` for both clips, GPS fit about 3.4 m rms |
+| `full` | numbers close to the Kojori result below; `inspect_model.py` should flag clip `c43` as mirrored |
+
+`geo` is exact, so it doubles as a regression test for `georef.py` and `build_dsm.py`. COLMAP runs are
+not bit-reproducible: `mini` and `full` give close numbers, not equal ones. The model's unit is arbitrary,
+so the scale in metres per unit differs from run to run.
+
+`mini` fixes the video-to-log lag at 1.15 s instead of searching for it. Its two passes fly the same
+course, and a time lag then looks like an along-track shift that the fit absorbs. The lag is only
+observable when the passes go in different directions, as in the full set.
 
 ## Requirements
 
@@ -84,6 +113,7 @@ Viewing: `python3 $T/voxview.py $WS` (coloured voxels, camera track; keys `[ ]` 
 | `extract_telemetry.py` | ArduPilot `.BIN` → GPS/pose CSVs with arm events and clock correction |
 | `georef.py` | similarity fit to GPS, writes the cloud in local east/north/up metres |
 | `build_dsm.py` | height grid (DSM), orthophoto, least-cost canyon axis, web data |
+| `examples/kojori.sh` | download the example dataset and run the tools on it |
 
 ## Telemetry
 

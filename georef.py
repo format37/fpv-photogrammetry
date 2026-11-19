@@ -8,6 +8,7 @@ are left out of the fit and their points are removed from the cloud through fuse
 usage: georef.py WS TELEMETRY.csv OUTDIR --clip c39=0 c40=216.04 ... [--drop c43] [--home LAT LON ALT]
        TELEMETRY.csv columns: t_since_arm_s, lat, lon, alt_gps_msl
 writes OUTDIR/georef.json (s, R, t, lag, home, residuals), OUTDIR/cloud_enu.npz (xyz float32, rgb uint8), cams_enu.csv
+Without WS/dense/fused.ply (a sparse-only workspace) it writes the fit and the camera track and stops there.
 """
 import argparse, json, os, re, struct, numpy as np, pandas as pd, pycolmap, open3d as o3d
 
@@ -16,7 +17,8 @@ ap.add_argument("--clip", nargs="+", required=True); ap.add_argument("--drop", n
 ap.add_argument("--home", nargs=3, type=float); ap.add_argument("--lag", nargs=3, type=float, default=[-2, 4, 0.05])
 a = ap.parse_args(); os.makedirs(a.out, exist_ok=True)
 off = {k: float(v) for k, v in (c.split("=") for c in a.clip)}
-rec = pycolmap.Reconstruction(os.path.join(a.ws, open(f"{a.ws}/best_model.txt").read().strip()))
+bm = f"{a.ws}/best_model.txt"                                # written by run_dense.sh; a sparse-only workspace has none
+rec = pycolmap.Reconstruction(os.path.join(a.ws, open(bm).read().strip() if os.path.exists(bm) else "sparse/0"))
 ims = sorted(rec.images.values(), key=lambda i: i.name)
 clip = np.array([re.match(r"(.*?)_?t\d", i.name).group(1) for i in ims])
 tv = np.array([off[c] + float(re.search(r"t(\d+\.\d+)\.jpg", i.name).group(1)) for c, i in zip(clip, ims)])
@@ -45,6 +47,8 @@ json.dump(dict(scale=s, R=R.tolist(), t=t.tolist(), lag=lag, home=[lat0, lon0, h
                n=int(use.sum()), dropped=a.drop), open(f"{a.out}/georef.json", "w"), indent=1)
 pd.DataFrame(dict(name=[i.name for i in ims], t_arm=tv + lag, used=use, **{k: (s * C @ R.T + t)[:, j] for j, k in enumerate("enu")})).to_csv(f"{a.out}/cams_enu.csv", index=False)
 
+if not os.path.exists(f"{a.ws}/dense/fused.ply"):             # sparse-only workspace: the fit and the camera track are the result
+    print(f"no {a.ws}/dense/fused.ply: wrote georef.json and cams_enu.csv, skipped cloud_enu.npz"); raise SystemExit(0)
 pc = o3d.io.read_point_cloud(f"{a.ws}/dense/fused.ply"); P = np.asarray(pc.points); col = (np.asarray(pc.colors) * 255).astype(np.uint8)
 keep = np.ones(len(P), bool)
 if a.drop:                                                   # fused.ply.vis: per point, indices into the dense model's image list

@@ -6,3 +6,4 @@ open3d
 pycolmap
 pymavlink
 matplotlib
+huggingface_hub>=0.34   # only for examples/kojori.sh fetch
